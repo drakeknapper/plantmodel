@@ -47,8 +47,8 @@ def params_three():
 	return np.array([params['V_Ca']])
 
 
-"""#===
-
+#===
+"""
 if CUDA_ENABLED:
 	
 	lib_cuda.cuda_integrate_three.argtype = [ct.POINTER(ct.c_double), ct.c_uint,
@@ -73,9 +73,8 @@ if CUDA_ENABLED:
 	
 		return np.reshape(X_out, (N_initials, N_integrate, 3), 'C')
 	
-	
+"""	
 #===
-"""
 
 lib.derivs_one.argtypes = [ct.POINTER(ct.c_double), ct.POINTER(ct.c_double), ct.POINTER(ct.c_double)]
 def derivs_one(state):
@@ -105,7 +104,7 @@ def integrate_one_rk4(initial_state, dt, N_integrate, stride=1):
 
 #===
 
-initial_state = [-42.13934349, 0.51379418, 0.10720682, 0.74274042, 0.77535553]
+initial_state = [-42.13934349, 0.51379418, 0.10720682, 0.74274042, 0.77535553, 0.1]
 dt = 1.0
 N_integrate = 5*10**4
 stride = 10
@@ -134,7 +133,6 @@ def single_orbit(dt=dt, N_integrate=N_integrate, stride=stride, V_threshold=THRE
 
 
 #===
-
 """
 lib.integrate_three_rk4.argtypes = [ct.POINTER(ct.c_double),
 					ct.POINTER(ct.c_double),
@@ -182,7 +180,6 @@ def integrate_four_rk4(initial_states, coupling, dt, N_integrate, stride=1):
 
 	return np.reshape(X_out, (N_integrate, 4), 'C')
 """
-
 def alpha_m(V): return 0.1*(50.-V)/(np.exp((50.-V)/10.)-1.)
 def beta_m(V):  return 4.*np.exp((25.-V)/18.)
 def alpha_h(V): return 0.07*np.exp((25.-V)/20.)
@@ -196,7 +193,7 @@ def tau_h(V_tilde):	return 1./(alpha_h(V_tilde)+beta_h(V_tilde))
 def n_inf(V_tilde):	return alpha_n(V_tilde)/(alpha_n(V_tilde)+beta_n(V_tilde))
 def tau_n(V_tilde):	return 1./(alpha_n(V_tilde)+beta_n(V_tilde))
 def x_inf(V):		return 1./(1.+np.exp(params['A']*(params['B']-V)))
-def Vx_inf(x):	return params['B']-np.log(1./x-1.)/params['A']
+def Vx_inf(x):		return params['B']-np.log(1./x-1.)/params['A']
 
 def nullcline_h(V): # nullcline_h
 	return h_inf(params['C_1']*V+params['C_2'])
@@ -233,32 +230,23 @@ if __name__ == '__main__':
 	N = 5*10**4
 	t = dt*arange(N)
 	
-	"""
-	X_in  =  concatenate((initial_state, initial_state, zeros((10), float)))
-	V = integrate_four_rk4(X_in, coupling=zeros((18), float), dt=dt/float(stride), N_integrate=N, stride=stride)
-	plot(V[:, 0])
-	plot(V[:, 1])
-	plot(V[:, 2])
-	plot(V[:, 3])
-	show()
 
-	"""
 	X = integrate_one_rk4(initial_state, dt=dt/float(stride), N_integrate=N, stride=stride)
-
-	ax = subplot(511)
-	plot(t, X[0], 'k.-')
+	
+	ax = subplot(111)
+	plot(t[0::5], X[0][::5], 'k')
 	ylabel('V')
-	subplot(512, sharex=ax)
-	plot(t, X[1], 'k.-')
-	ylabel('h')
-	subplot(513, sharex=ax)
-	plot(t, X[2], 'k.-')
-	ylabel('n')
-	subplot(514, sharex=ax)
-	plot(t, X[3], 'k.-')
-	ylabel('x')
-	subplot(515, sharex=ax)
-	plot(t, X[4], 'k.-')
-	ylabel('[Ca2+]')
+	#subplot(512, sharex=ax)
+	#plot(t, X[1], 'k.-')
+	#ylabel('h')
+	#subplot(513, sharex=ax)
+	#plot(t, X[2], 'k.-')
+	#ylabel('n')
+	#subplot(514, sharex=ax)
+	#plot(t, X[3], 'k.-')
+	#ylabel('x')
+	#subplot(515, sharex=ax)
+	#plot(t, X[4], 'k.-')
+	#ylabel('[Ca2+]')
 	show()
 
