@@ -13,7 +13,7 @@
 
 
 #define N_EQ1	6
-#define N_EQ3	3*N_EQ1
+#define N_EQ2	2*N_EQ1
 #define N_EQ4	4*N_EQ1
 
 #define C_m	1.	  // uF/cm^2
@@ -110,9 +110,45 @@ void integrate_one_rk4(double* y, const double dt, const unsigned N, const unsig
 		//printf("%i %lf\n", i, y[0]);
 		for(j=0; j<N_EQ1; j++) output[N_EQ1*i+j] = y[j];
 	}
-}
+};
 
+void derivs_two(const double* y, double* dxdt, const double* p, const double* kij) {};
 
+void integrate_two_rk4(double* y, const double* params, const double* coupling, double* output, const double dt, const unsigned N, const unsigned stride)
+{
+	unsigned i, j, k;
+	double dt2, dt6;
+	double y1[N_EQ2], y2[N_EQ2], k1[N_EQ2], k2[N_EQ2], k3[N_EQ2], k4[N_EQ2];
+	dt2 = dt/2.; dt6 = dt/6.;
+
+	for(j=0; j<2; j++)
+		output[j] = y[N_EQ1*j]; 	
+
+	for(i=1; i<N; i++)
+	{
+		for(j=0; j<stride; j++)
+		{
+			derivs_two(y, k1, params, coupling);
+			for(k=0; k<N_EQ2; k++)
+				y1[k] = y[k]+k1[k]*dt2; 			
+
+			derivs_two(y1, k2, params, coupling);
+
+			for(k=0; k<N_EQ2; k++)
+				y2[k] = y[k]+k2[k]*dt2; 			
+			derivs_two(y2, k3, params, coupling);
+
+			for(k=0; k<N_EQ2; k++)
+				y2[k] = y[k]+k3[k]*dt; 			
+
+			derivs_two(y2, k4, params, coupling);
+			for(k=0; k<N_EQ2; k++)
+				y[k] += dt6*(k1[k]+2.*(k2[k]+k3[k])+k4[k]);
+		}
+		for(j=0; j<2; j++)
+			output[2*i+j] = y[N_EQ1*j]; 					
+	}
+};
 
 
 
