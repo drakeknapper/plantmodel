@@ -182,15 +182,8 @@ if __name__ == '__main__':
 	N = 8*10**4
 	t = dt*arange(N)
 	
-
-	X = integrate_one_rk4(initial_state, dt=dt/float(stride), N_integrate=N, stride=stride)
 	
-	ax = subplot(111)
-	plot(t[::5], X[0][::5], 'k')
-	ylabel('V')
-	show()
-	
-	X = integrate_two_rk4(0.1*rand(2), coupling=zeros((2), float), dt=dt.float(stride), N_integrate=N, stride=stride)
+	X = integrate_two_rk4(0.1*rand(2), coupling=zeros((2), float), dt=dt/float(stride), N_integrate=N, stride=stride)
 	t = dt*arange(X.shape[0])
 	plot(t, X[:, 0])
 	plot(t, X[:, 1])
