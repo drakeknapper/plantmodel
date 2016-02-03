@@ -111,7 +111,26 @@ void integrate_one_rk4(double* y, const double dt, const unsigned N, const unsig
 	}
 };
 
-void derivs_two(const double* y, double* dxdt, const double* p, const double* kij) {};
+void derivs_two(const double* y, double* dxdt, const double* p, const double* kij) {
+
+	unsigned i, j;
+	double bm_factor[2], bmf_sum;
+	for(i=0; i<2; i++){
+		bm_factor[i] = boltzmann(y[i*N_EQ1], COUPLING_THRESHOLD, THRESHOLD_SLOPE);
+		derivs_one(y+i*N_EQ1, dxdt+i*N_EQ1, p);
+	}
+	for(i=0; i<2; i++) {
+		bmf_sum = 0.;
+		for(j+0; j<i; j++){
+			bmf_sum += bm_factor[j];
+		}
+		for(j=i+1; j<2; j++){
+			bmf_sum += bmfactor[j];
+		}
+		dxdt[i*N_EQ1] += g_inh*(p[4]-y[i*N_EQ1])*bmf_sum;
+	}
+
+};
 
 void integrate_two_rk4(double* y, const double* params, const double* coupling, double* output, const double dt, const unsigned N, const unsigned stride)
 {
