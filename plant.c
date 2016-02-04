@@ -39,7 +39,6 @@
 #define THRESHOLD_SLOPE	1.	// mV^-1
 #define THRESHOLD	-30.  // mV
 #define E_syn	-62.5  // mV
-#define k1	100.	// <++>
 //#define <++>	<++>	// <++>
 //#define <++>	<++>	// <++>
 
@@ -58,7 +57,7 @@ double tau_h(const double V_tilde)	{ return 1./(alpha_h(V_tilde)+beta_h(V_tilde)
 double n_inf(const double V_tilde)	{ return alpha_n(V_tilde)/(alpha_n(V_tilde)+beta_n(V_tilde)); }
 double tau_n(const double V_tilde)	{ return 1./(alpha_n(V_tilde)+beta_n(V_tilde)); }
 double x_inf(const double V)		{ return 1./(1.+exp(A*(B-V))); }
-double boltzmann(const double x, const double x_0, const double k)	{return 1./(1.+exp(-k*(x-x_0)))}
+double boltzmann(const double x, const double x_0, const double k)	{return 1./(1.+exp(-k*(x-x_0)));}
 
 void derivs_one(const double* y, double* dydt, const double* p)
 {
@@ -70,7 +69,7 @@ void derivs_one(const double* y, double* dydt, const double* p)
         dydt[2] = lambda*(n_inf(V_tilde)-n)/tau_n(V_tilde);	// dn/dt
         dydt[3] = (x_inf(V)-x)/tau_x;				// dx/dt
         dydt[4] = rho * (K_c * x * (V_Ca - V) - Ca);		// d[Ca2+]/dt
-	dydt[5] = A*(1.-S)*boltzmann(V, th, k1)-Bt*S         // dS/dt
+	dydt[5] = A*(1.-S)*boltzmann(V, th, 100.)-Bt*S;         // dS/dt
 }
 
 
