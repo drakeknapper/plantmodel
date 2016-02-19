@@ -67,7 +67,11 @@ void derivs_one(const double* y, double* dydt, const double* p)
         dydt[2] = lambda*(n_inf(V_tilde)-n)/tau_n(V_tilde);	// dn/dt
         dydt[3] = (x_inf(V)-x)/tau_x;				// dx/dt
         dydt[4] = rho * (K_c * x * (V_Ca - V) - Ca);		// d[Ca2+]/dt
+<<<<<<< HEAD
 	dydt[5] = A*(1.-S)*boltzmann(V, 20., 100.)-0.2*S;         // dS/dt
+=======
+	dydt[5] = A*(1.-S)*boltzmann(V, th, 100.)-Bt*S;         // dS/dt
+>>>>>>> ef08970a20cae6d1fa3e40e9aa09527f4c9cb030
 }
 
 
