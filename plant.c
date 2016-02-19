@@ -16,6 +16,7 @@
 #define N_EQ2   2*N_EQ1
 #define N_EQ4	4*N_EQ1
 
+
 #define C_m	1.	  // uF/cm^2
 #define V_Na	30.	  // mV
 //#define V_Ca	140.	  // mV
@@ -29,18 +30,16 @@
 #define C_1	127./105.
 #define C_2	8265./105.
 #define lambda	1./12.5
-#define tau_x	235.	// ms ??
-#define A	0.15	// ??
-#define B	-50.	// ??
-#define rho	0.0003	// ms^-1
-#define K_c	0.0085	// mV^-1
+#define tau_x	9400.	// ms ??
+#define A	0.3	// ??
+#define B	-40.	// ??
+#define rho	0.00015	// ms^-1
+#define K_c	0.00425	// mV^-1
 #define THRESHOLD_SLOPE	1.	// mV^-1
 #define THRESHOLD	-30.  // mV
-#define E_syn	-62.5  // mV
+#define E_syn	-80.  // mV
+#define shift   -2.
 //#define <++>	<++>	// <++>
-//#define <++>	<++>	// <++>
-
-
 
 double alpha_m(const double V)		{ return 0.1*(50.-V)/(exp((50.-V)/10.)-1.); } 
 double beta_m(const double V)		{ return 4.*exp((25.-V)/18.); } 
@@ -55,7 +54,11 @@ double tau_h(const double V_tilde)	{ return 1./(alpha_h(V_tilde)+beta_h(V_tilde)
 double n_inf(const double V_tilde)	{ return alpha_n(V_tilde)/(alpha_n(V_tilde)+beta_n(V_tilde)); }
 double tau_n(const double V_tilde)	{ return 1./(alpha_n(V_tilde)+beta_n(V_tilde)); }
 double x_inf(const double V)		{ return 1./(1.+exp(A*(B-V))); }
-double boltzmann(const double x, const double x_0, const double k)	{return 1./(1.+exp(-k*(x-x_0)));}
+
+double boltzmann(const double x, const double x_0, const double k)	
+{
+	return 1./(1.+exp(-k*(x-x_0)));
+}
 
 void derivs_one(const double* y, double* dydt, const double* p)
 {
@@ -66,8 +69,8 @@ void derivs_one(const double* y, double* dydt, const double* p)
         dydt[1] = lambda*(h_inf(V_tilde)-h)/tau_h(V_tilde);	// dh/dt
         dydt[2] = lambda*(n_inf(V_tilde)-n)/tau_n(V_tilde);	// dn/dt
         dydt[3] = (x_inf(V)-x)/tau_x;				// dx/dt
-        dydt[4] = rho * (K_c * x * (V_Ca - V) - Ca);		// d[Ca2+]/dt
-	dydt[5] = A*(1.-S)*boltzmann(V, 20., 100.)-0.2*S;         // dS/dt
+        dydt[4] = rho * (K_c * x * (V_Ca - V - shift) - Ca);		// d[Ca2+]/dt
+	dydt[5] = A*(1.-S)*boltzmann(V, 20., 100.)-0.02*S;  // dS/dt
 }
 
 

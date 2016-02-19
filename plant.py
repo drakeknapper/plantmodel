@@ -94,7 +94,7 @@ def single_orbit(dt=dt, N_integrate=N_integrate, stride=stride, V_threshold=THRE
 		ni = tl.crossings(V, V_threshold) # convert to millivolts
 		V, h, n, x, Ca, S = V[ni[-2]:ni[-1]], h[ni[-2]:ni[-1]], n[ni[-2]:ni[-1]], x[ni[-2]:ni[-1]], Ca[ni[-2]:ni[-1]], S[ni[-2]:ni[-1]]
 		t = PI2*np.arange(V.size)/float(V.size-1)
-		V_model.makeModel(V, t); h_model.makeModel(h, t); n_model.makeModel(n, t); x_model.makeModel(x, t); Ca_model.makeModel(Ca, t); S_model.makeModel(S, t)
+		V_model.makeModel(V, t); h_model.makeModel(h, t); n_model.makeModel(n, t); x_model.makeModel(x, t); Ca_model.makeModel(Ca, t)
 
 	except:
 		print '# single_orbit:  No closed orbit found!'
@@ -103,7 +103,7 @@ def single_orbit(dt=dt, N_integrate=N_integrate, stride=stride, V_threshold=THRE
 	
 	T = dt*V.size
 
-	return V_model, h_model, n_model, x_model, Ca_model, S_model, T
+	return V_model, h_model, n_model, x_model, Ca_model,  T
 
 
 #===
@@ -202,16 +202,19 @@ if __name__ == '__main__':
 	from pylab import *
 	import time
 
-	dt = 1.0
+	dt = 0.5 
 	stride = 10
-	N = 5*10**4
+	N = 20*10**4
 	t = dt*arange(N)
-	
+	coups = 0.008*np.ones((18), float)	
+	#X = integrate_two_rk4(0.1*randn(12), coupling=zeros((2), float), dt=dt/float(stride), N_integrate=N, stride=stride)
+	#X = integrate_one_rk4(initial_state, dt=dt/float(stride), N_integrate=N, stride=stride)
+	X = integrate_four_rk4(0.1*randn(24), coupling=coups, dt=dt/float(stride), N_integrate=N, stride=stride)
 
-	X = integrate_two_rk4(0.1*randn(12), coupling=zeros((2), float), dt=dt/float(stride), N_integrate=N, stride=stride)
 	
 	plot(t, X[:, 0])
-	plot(t, X[:, 1])
-	
+	plot(t, X[:, 1]-80.)
+	plot(t, X[:, 2]-160.)
+	plot(t, X[:, 3]-240.)
 	show()
 
