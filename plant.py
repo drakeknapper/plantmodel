@@ -48,33 +48,6 @@ def params_three():
 
 
 #===
-"""
-if CUDA_ENABLED:
-	
-	lib_cuda.cuda_integrate_three.argtype = [ct.POINTER(ct.c_double), ct.c_uint,
-				    	ct.POINTER(ct.c_double), ct.c_uint,
-				    	ct.POINTER(ct.c_double), ct.c_uint,
-				    	ct.POINTER(ct.c_double), ct.c_uint,
-				    	ct.c_double, ct.c_uint, ct.c_uint]
-	def cuda_integrate_three_rk4(initial_states, coupling, dt, N_integrate, stride=1):
-		coup = np.zeros((9), float)
-		coup[:coupling.size] = coupling
-	
-		initial_states = np.asarray(initial_states)
-		N_initials = initial_states.size/9 # initial states / state variables
-		X_out = np.zeros((3*N_initials*N_integrate), float)
-		p = params_three()
-	
-		lib_cuda.cuda_integrate_three(initial_states.ctypes.data_as(ct.POINTER(ct.c_double)), ct.c_uint(initial_states.size),
-					X_out.ctypes.data_as(ct.POINTER(ct.c_double)),
-					coup.ctypes.data_as(ct.POINTER(ct.c_double)),
-					p.ctypes.data_as(ct.POINTER(ct.c_double)),
-					ct.c_double(dt), ct.c_uint(N_integrate), ct.c_uint(stride))
-	
-		return np.reshape(X_out, (N_initials, N_integrate, 3), 'C')
-	
-"""	
-#===
 
 lib.derivs_one.argtypes = [ct.POINTER(ct.c_double), ct.POINTER(ct.c_double), ct.POINTER(ct.c_double)]
 def derivs_one(state):
@@ -133,29 +106,6 @@ def single_orbit(dt=dt, N_integrate=N_integrate, stride=stride, V_threshold=THRE
 
 
 #===
-"""
-lib.integrate_three_rk4.argtypes = [ct.POINTER(ct.c_double),
-					ct.POINTER(ct.c_double),
-					ct.POINTER(ct.c_double),
-					ct.POINTER(ct.c_double),
-					ct.c_double, ct.c_uint, ct.c_uint]
-def integrate_three_rk4(initial_state, coupling, dt, N_integrate, stride=1):
-	coup = np.zeros((9), float)
-	coup[:coupling.size] = coupling
-
-	initial_state = np.asarray(initial_state)
-	X_out = np.zeros((3*N_integrate), float)
-	parameters = params_three()
-
-	lib.integrate_three_rk4(initial_state.ctypes.data_as(ct.POINTER(ct.c_double)),
-				parameters.ctypes.data_as(ct.POINTER(ct.c_double)),
-				coupling.ctypes.data_as(ct.POINTER(ct.c_double)),
-				X_out.ctypes.data_as(ct.POINTER(ct.c_double)),
-				ct.c_double(dt), ct.c_uint(N_integrate), ct.c_uint(stride))
-
-	return np.reshape(X_out, (N_integrate, 3), 'C')
-
-
 
 lib.integrate_four_rk4.argtypes = [ct.POINTER(ct.c_double),
 					ct.POINTER(ct.c_double),
@@ -179,7 +129,7 @@ def integrate_four_rk4(initial_states, coupling, dt, N_integrate, stride=1):
 		ct.c_double(dt), ct.c_uint(N_integrate), ct.c_uint(stride))
 
 	return np.reshape(X_out, (N_integrate, 4), 'C')
-"""
+
 def alpha_m(V): return 0.1*(50.-V)/(np.exp((50.-V)/10.)-1.)
 def beta_m(V):  return 4.*np.exp((25.-V)/18.)
 def alpha_h(V): return 0.07*np.exp((25.-V)/20.)
@@ -231,22 +181,12 @@ if __name__ == '__main__':
 	t = dt*arange(N)
 	
 
-	X = integrate_one_rk4(initial_state, dt=dt/float(stride), N_integrate=N, stride=stride)
+	X = integrate_four_rk4(0.1*randn(24), coupling=zeros((12), float), dt=dt/float(stride), N_integrate=N, stride=stride)
 	
-	ax = subplot(111)
-	plot(t[0::5], X[0][::5], 'k')
-	ylabel('V')
-	#subplot(512, sharex=ax)
-	#plot(t, X[1], 'k.-')
-	#ylabel('h')
-	#subplot(513, sharex=ax)
-	#plot(t, X[2], 'k.-')
-	#ylabel('n')
-	#subplot(514, sharex=ax)
-	#plot(t, X[3], 'k.-')
-	#ylabel('x')
-	#subplot(515, sharex=ax)
-	#plot(t, X[4], 'k.-')
-	#ylabel('[Ca2+]')
+	plot(t, X[:, 0])
+	plot(t, X[:, 1])
+	plot(t, X[:, 2])
+	plot(t, X[:, 3])
+	
 	show()
 

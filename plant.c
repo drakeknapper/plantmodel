@@ -31,15 +31,12 @@
 #define lambda	1./12.5
 #define tau_x	235.	// ms ??
 #define A	0.15	// ??
-#define Bt	0.02
-#define th	20
 #define B	-50.	// ??
 #define rho	0.0003	// ms^-1
 #define K_c	0.0085	// mV^-1
 #define THRESHOLD_SLOPE	1.	// mV^-1
 #define THRESHOLD	-30.  // mV
 #define E_syn	-62.5  // mV
-#define k1	100.	// <++>
 //#define <++>	<++>	// <++>
 //#define <++>	<++>	// <++>
 
@@ -58,7 +55,7 @@ double tau_h(const double V_tilde)	{ return 1./(alpha_h(V_tilde)+beta_h(V_tilde)
 double n_inf(const double V_tilde)	{ return alpha_n(V_tilde)/(alpha_n(V_tilde)+beta_n(V_tilde)); }
 double tau_n(const double V_tilde)	{ return 1./(alpha_n(V_tilde)+beta_n(V_tilde)); }
 double x_inf(const double V)		{ return 1./(1.+exp(A*(B-V))); }
-double boltzmann(const double x, const double x_0, const double k)	{return 1./(1.+exp(-k*(x-x_0)))}
+double boltzmann(const double x, const double x_0, const double k)	{return 1./(1.+exp(-k*(x-x_0)));}
 
 void derivs_one(const double* y, double* dydt, const double* p)
 {
@@ -70,7 +67,7 @@ void derivs_one(const double* y, double* dydt, const double* p)
         dydt[2] = lambda*(n_inf(V_tilde)-n)/tau_n(V_tilde);	// dn/dt
         dydt[3] = (x_inf(V)-x)/tau_x;				// dx/dt
         dydt[4] = rho * (K_c * x * (V_Ca - V) - Ca);		// d[Ca2+]/dt
-	dydt[5] = A*(1.-S)*boltzmann(V, th, k1)-Bt*S         // dS/dt
+	dydt[5] = A*(1.-S)*boltzmann(V, 20., 100.)-0.2*S;         // dS/dt
 }
 
 
@@ -110,9 +107,66 @@ void integrate_one_rk4(double* y, const double dt, const unsigned N, const unsig
 		//printf("%i %lf\n", i, y[0]);
 		for(j=0; j<N_EQ1; j++) output[N_EQ1*i+j] = y[j];
 	}
-}
+};
 
+void derivs_four(const double* y, double* dydt, const double* p, const double* kij)
+{
+	int i;
+	double bm_factor[4], V[4];
 
+	for(i=0; i<4; i++)
+	{
+		V[i] = y[i*N_EQ1];
+		derivs_one(y+i*N_EQ1, dydt+i*N_EQ1, p);
+		bm_factor[i] = boltzmann(V[i], THRESHOLD, THRESHOLD_SLOPE)/C_m;
+	}
+
+	dydt[0] +=       (E_syn-V[0])*(kij[0]*bm_factor[1] + kij[1]* bm_factor[2] + kij[2]* bm_factor[3]);
+	dydt[N_EQ1] +=   (E_syn-V[1])*(kij[3]*bm_factor[0] + kij[4]* bm_factor[2] + kij[5]* bm_factor[3]);
+	dydt[2*N_EQ1] += (E_syn-V[2])*(kij[6]*bm_factor[0] + kij[7]* bm_factor[1] + kij[8]* bm_factor[3]);
+	dydt[3*N_EQ1] += (E_syn-V[3])*(kij[9]*bm_factor[0] + kij[10]*bm_factor[1] + kij[11]*bm_factor[2]);
+
+	dydt[0]       += (kij[12]*(V[1]-V[0]) + kij[13]*(V[2]-V[0]) + kij[14]*(V[3]-V[0]))/C_m;
+	dydt[N_EQ1]   += (kij[12]*(V[0]-V[1]) + kij[15]*(V[2]-V[1]) + kij[16]*(V[3]-V[1]))/C_m;
+	dydt[2*N_EQ1] += (kij[13]*(V[0]-V[2]) + kij[15]*(V[1]-V[2]) + kij[17]*(V[3]-V[2]))/C_m;
+	dydt[3*N_EQ1] += (kij[14]*(V[0]-V[3]) + kij[16]*(V[1]-V[3]) + kij[17]*(V[2]-V[3]))/C_m;
+};
+
+void integrate_four_rk4(double* y, const double* params, const double* coupling, double* output, const double dt, const unsigned N, const unsigned stride)
+{
+	unsigned i, j, k;
+	double dt2, dt6;
+	double y1[N_EQ4], y2[N_EQ4], k1[N_EQ4], k2[N_EQ4], k3[N_EQ4], k4[N_EQ4];
+	dt2 = dt/2.; dt6 = dt/6.;
+
+	for(j=0; j<4; j++)
+		output[j] = y[N_EQ1*j];
+
+	for(i=1; i<N; i++)
+	{
+		for(j=0; j<stride; j++)
+		{
+			derivs_four(y, k1, params, coupling);
+			for(k=0; k<N_EQ4; k++)
+				y1[k] = y[k]+k1[k]*dt2; 			
+
+			derivs_four(y1, k2, params, coupling);
+
+			for(k=0; k<N_EQ4; k++)
+				y2[k] = y[k]+k2[k]*dt2; 			
+			derivs_four(y2, k3, params, coupling);
+
+			for(k=0; k<N_EQ4; k++)
+				y2[k] = y[k]+k3[k]*dt; 			
+
+			derivs_four(y2, k4, params, coupling);
+			for(k=0; k<N_EQ4; k++)
+				y[k] += dt6*(k1[k]+2.*(k2[k]+k3[k])+k4[k]);
+		}
+		for(j=0; j<4; j++)
+			output[4*i+j] = y[N_EQ1*j]; 					
+	}
+};
 
 
 
