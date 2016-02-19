@@ -35,6 +35,7 @@ params['V_Ca'] = 140.	  # mV
 #params['<++>'] = <++>	  # <++>
 
 N_EQ1 = 6
+N_EQ2 = 2*N_EQ1
 N_EQ3 = 3*N_EQ1
 N_EQ4 = 4*N_EQ1
 
@@ -106,6 +107,30 @@ def single_orbit(dt=dt, N_integrate=N_integrate, stride=stride, V_threshold=THRE
 
 
 #===
+lib.integrate_two_rk4.argtypes = [ct.POINTER(ct.c_double),
+					ct.POINTER(ct.c_double),
+					ct.POINTER(ct.c_double),
+					ct.POINTER(ct.c_double),
+					ct.c_double, ct.c_uint, ct.c_uint]
+def integrate_two_rk4(initial_states, coupling, dt, N_integrate, stride=1):
+	initial_states = np.asarray(initial_states) #
+	assert initial_states.size == N_EQ2
+
+	coup = np.zeros((2), float)
+	coup[:coupling.size] = np.asarray(coupling);
+
+	X_out = np.zeros((2*N_integrate), float)
+	p = params_three()
+
+	lib.integrate_two_rk4(initial_states.ctypes.data_as(ct.POINTER(ct.c_double)),
+		p.ctypes.data_as(ct.POINTER(ct.c_double)),
+		coup.ctypes.data_as(ct.POINTER(ct.c_double)),
+		X_out.ctypes.data_as(ct.POINTER(ct.c_double)),
+		ct.c_double(dt), ct.c_uint(N_integrate), ct.c_uint(stride))
+
+	return np.reshape(X_out, (N_integrate, 2), 'C')
+
+#===
 
 lib.integrate_four_rk4.argtypes = [ct.POINTER(ct.c_double),
 					ct.POINTER(ct.c_double),
@@ -129,6 +154,8 @@ def integrate_four_rk4(initial_states, coupling, dt, N_integrate, stride=1):
 		ct.c_double(dt), ct.c_uint(N_integrate), ct.c_uint(stride))
 
 	return np.reshape(X_out, (N_integrate, 4), 'C')
+
+#===
 
 def alpha_m(V): return 0.1*(50.-V)/(np.exp((50.-V)/10.)-1.)
 def beta_m(V):  return 4.*np.exp((25.-V)/18.)
@@ -181,12 +208,10 @@ if __name__ == '__main__':
 	t = dt*arange(N)
 	
 
-	X = integrate_four_rk4(0.1*randn(24), coupling=zeros((12), float), dt=dt/float(stride), N_integrate=N, stride=stride)
+	X = integrate_two_rk4(0.1*randn(12), coupling=zeros((2), float), dt=dt/float(stride), N_integrate=N, stride=stride)
 	
 	plot(t, X[:, 0])
 	plot(t, X[:, 1])
-	plot(t, X[:, 2])
-	plot(t, X[:, 3])
 	
 	show()
 

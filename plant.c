@@ -13,7 +13,7 @@
 
 
 #define N_EQ1	6
-#define N_EQ3	3*N_EQ1
+#define N_EQ2   2*N_EQ1
 #define N_EQ4	4*N_EQ1
 
 #define C_m	1.	  // uF/cm^2
@@ -67,11 +67,7 @@ void derivs_one(const double* y, double* dydt, const double* p)
         dydt[2] = lambda*(n_inf(V_tilde)-n)/tau_n(V_tilde);	// dn/dt
         dydt[3] = (x_inf(V)-x)/tau_x;				// dx/dt
         dydt[4] = rho * (K_c * x * (V_Ca - V) - Ca);		// d[Ca2+]/dt
-<<<<<<< HEAD
 	dydt[5] = A*(1.-S)*boltzmann(V, 20., 100.)-0.2*S;         // dS/dt
-=======
-	dydt[5] = A*(1.-S)*boltzmann(V, th, 100.)-Bt*S;         // dS/dt
->>>>>>> ef08970a20cae6d1fa3e40e9aa09527f4c9cb030
 }
 
 
@@ -85,8 +81,6 @@ void integrate_one_rk4(double* y, const double dt, const unsigned N, const unsig
 
 	for(j=0; j<N_EQ1; j++)
 		output[j] = y[j];
-
-
 
 	for(i=1; i<N; i++)
 	{
@@ -110,6 +104,61 @@ void integrate_one_rk4(double* y, const double dt, const unsigned N, const unsig
 		}
 		//printf("%i %lf\n", i, y[0]);
 		for(j=0; j<N_EQ1; j++) output[N_EQ1*i+j] = y[j];
+	}
+};
+
+void derivs_two(const double* y, double* dydt, const double* p, const double* kij)
+{
+	int i;
+	double bm_factor[2], V[2];
+
+	for(i=0; i<2; i++)
+	{
+		V[i] = y[i*N_EQ1];
+		derivs_one(y+i*N_EQ1, dydt+i*N_EQ1, p);
+		bm_factor[i] = boltzmann(V[i], THRESHOLD, THRESHOLD_SLOPE)/C_m;
+	}
+
+	dydt[0] +=       (E_syn-V[0])*(kij[0]*bm_factor[1] + kij[1]* bm_factor[2] + kij[2]* bm_factor[3]);
+	dydt[N_EQ1] +=   (E_syn-V[1])*(kij[3]*bm_factor[0] + kij[4]* bm_factor[2] + kij[5]* bm_factor[3]);
+
+	dydt[0]       += (kij[12]*(V[1]-V[0]) + kij[13]*(V[2]-V[0]) + kij[14]*(V[3]-V[0]))/C_m;
+	dydt[N_EQ1]   += (kij[12]*(V[0]-V[1]) + kij[15]*(V[2]-V[1]) + kij[16]*(V[3]-V[1]))/C_m;
+};
+
+void integrate_two_rk4(double* y, const double* params, const double* coupling, double* output, const double dt, const unsigned N, const unsigned stride)
+{
+	unsigned i, j, k;
+	double dt2, dt6;
+	double y1[N_EQ4], y2[N_EQ4], k1[N_EQ4], k2[N_EQ4], k3[N_EQ4], k4[N_EQ4];
+	dt2 = dt/2.; dt6 = dt/6.;
+
+	for(j=0; j<2; j++)
+		output[j] = y[N_EQ1*j];
+
+	for(i=1; i<N; i++)
+	{
+		for(j=0; j<stride; j++)
+		{
+			derivs_two(y, k1, params, coupling);
+			for(k=0; k<N_EQ2; k++)
+				y1[k] = y[k]+k1[k]*dt2; 			
+
+			derivs_two(y1, k2, params, coupling);
+
+			for(k=0; k<N_EQ2; k++)
+				y2[k] = y[k]+k2[k]*dt2; 			
+			derivs_two(y2, k3, params, coupling);
+
+			for(k=0; k<N_EQ2; k++)
+				y2[k] = y[k]+k3[k]*dt; 			
+
+			derivs_two(y2, k4, params, coupling);
+			for(k=0; k<N_EQ2; k++)
+				y[k] += dt6*(k1[k]+2.*(k2[k]+k3[k])+k4[k]);
+		}
+		for(j=0; j<2; j++)
+			output[2*i+j] = y[N_EQ1*j]; 					
 	}
 };
 
