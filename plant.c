@@ -37,9 +37,9 @@
 #define K_c	0.00425	// mV^-1
 #define THRESHOLD_SLOPE	1.	// mV^-1
 #define THRESHOLD	-30.  // mV
-#define E_syn	-80.  // mV
+#define E_syn	-40.  // mV
 #define shift   -2.
-//#define shift2   250.
+#define shift2   250.
 //#define <++>	<++>	// <++>
 
 double alpha_m(const double V)		{ return 0.1*(50.-V)/(exp((50.-V)/10.)-1.); } 
@@ -109,7 +109,7 @@ void integrate_one_rk4(double* y, const double dt, const unsigned N, const unsig
 		//printf("%i %lf\n", i, y[0]);
 		for(j=0; j<N_EQ1; j++) output[N_EQ1*i+j] = y[j];
 	}
-};
+}
 
 void derivs_two(const double* y, double* dydt, const double* p, const double* kij)
 {
@@ -120,33 +120,33 @@ void derivs_two(const double* y, double* dydt, const double* p, const double* ki
 	double V_tilde2 = C_1*V2+C_2;
 	
 	//Cell One
-	dydt[0] = -g_Na*powf(m_inf(V_tilde), 3)*h*(V-V_Na) - g_Ca*x*(V-V_Ca) - (g_K*powf(n, 4)+g_K_Ca*Ca/(0.5+Ca))*(V-V_K) - g_L*(V-V_L);	// dV/dt
+	dydt[0] = (-g_Na*powf(m_inf(V_tilde), 3)*h*(V-V_Na) - g_Ca*x*(V-V_Ca) - (g_K*powf(n, 4)+g_K_Ca*Ca/(0.5+Ca))*(V-V_K) - g_L*(V-V_L))/C_m;	// dV/dt
         dydt[1] = lambda*(h_inf(V_tilde)-h)/tau_h(V_tilde);	// dh/dt
         dydt[2] = lambda*(n_inf(V_tilde)-n)/tau_n(V_tilde);	// dn/dt
         dydt[3] = (x_inf(V)-x)/tau_x;				// dx/dt
         dydt[4] = rho * (K_c * x * (V_Ca - V - shift) - Ca);		// d[Ca2+]/dt
 	dydt[5] = 0.15*(1.-S)*boltzmann(V, 20., 100.)-0.02*S;  // dS/dt
 	//Cell Two	
-	dydt[6]  = -g_Na*powf(m_inf(V_tilde2), 3)*h2*(V2-V_Na) - g_Ca*x*(V2-V_Ca) - (g_K*powf(n2, 4)+g_K_Ca*Ca2/(0.5+Ca2))*(V2-V_K) - g_L*(V2-V_L);	// dV/dt
+	dydt[6]  = (-g_Na*powf(m_inf(V_tilde2), 3)*h2*(V2-V_Na) - g_Ca*x*(V2-V_Ca) - (g_K*powf(n2, 4)+g_K_Ca*Ca2/(0.5+Ca2))*(V2-V_K) - g_L*(V2-V_L))/C_m;	// dV/dt
         dydt[7]  = lambda*(h_inf(V_tilde2)-h2)/tau_h(V_tilde2);	// dh/dt
         dydt[8]  = lambda*(n_inf(V_tilde2)-n2)/tau_n(V_tilde2);	// dn/dt
         dydt[9]  = (x_inf(V2)-x2)/tau_x;				// dx/dt
         dydt[10] = rho * (K_c * x2 * (V_Ca - V2 - shift) - Ca2);		// d[Ca2+]/dt
-	dydt[11] = 0.15*(1.-S)*boltzmann(V, 20., 100.)-0.02*S;  // dS/dt
+	dydt[11] = 0.15*(1.-S2)*boltzmann(V, 20., 100.)-0.02*S2;  // dS/dt
 	
 	//Coupling With Alpha Synapse	
-	dydt[0] +=       (E_syn-V)*(kij[0]*(boltzmann(dydt[1], THRESHOLD, THRESHOLD_SLOPE)/C_m)*dydt[11]);
-	dydt[N_EQ1] +=   (E_syn-V2)*(kij[1]*(boltzmann(dydt[0], THRESHOLD, THRESHOLD_SLOPE)/C_m)*dydt[5]);
+	dydt[0] +=       (E_syn-V2)*(kij[0]/C_m)*dydt[11];
+	dydt[N_EQ1] +=   (E_syn-V)*(kij[1]/C_m)*dydt[5];
 
-	dydt[0]       	  += (kij[12]*(V2-V))/C_m;
-	dydt[N_EQ1]       += (kij[12]*(V-V2))/C_m;
-};
+	dydt[0]       	  += (0.00*(V2-V))/C_m;
+	dydt[N_EQ1]       += (0.00*(V-V2))/C_m;
+}
 
 void integrate_two_rk4(double* y, const double* params, const double* coupling, double* output, const double dt, const unsigned N, const unsigned stride)
 {
 	unsigned i, j, k;
 	double dt2, dt6;
-	double y1[N_EQ4], y2[N_EQ4], k1[N_EQ4], k2[N_EQ4], k3[N_EQ4], k4[N_EQ4];
+	double y1[N_EQ2], y2[N_EQ2], k1[N_EQ2], k2[N_EQ2], k3[N_EQ2], k4[N_EQ2];
 	dt2 = dt/2.; dt6 = dt/6.;
 
 	for(j=0; j<2; j++)
@@ -176,7 +176,7 @@ void integrate_two_rk4(double* y, const double* params, const double* coupling, 
 		for(j=0; j<2; j++)
 			output[2*i+j] = y[N_EQ1*j]; 					
 	}
-};
+}
 
 void derivs_four(const double* y, double* dydt, const double* p, const double* kij)
 {
@@ -199,7 +199,7 @@ void derivs_four(const double* y, double* dydt, const double* p, const double* k
 	dydt[N_EQ1]   += (kij[12]*(V[0]-V[1]) + kij[15]*(V[2]-V[1]) + kij[16]*(V[3]-V[1]))/C_m;
 	dydt[2*N_EQ1] += (kij[13]*(V[0]-V[2]) + kij[15]*(V[1]-V[2]) + kij[17]*(V[3]-V[2]))/C_m;
 	dydt[3*N_EQ1] += (kij[14]*(V[0]-V[3]) + kij[16]*(V[1]-V[3]) + kij[17]*(V[2]-V[3]))/C_m;
-};
+}
 
 void integrate_four_rk4(double* y, const double* params, const double* coupling, double* output, const double dt, const unsigned N, const unsigned stride)
 {
@@ -235,7 +235,7 @@ void integrate_four_rk4(double* y, const double* params, const double* coupling,
 		for(j=0; j<4; j++)
 			output[4*i+j] = y[N_EQ1*j]; 					
 	}
-};
+}
 
 
 

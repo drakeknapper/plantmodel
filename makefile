@@ -6,3 +6,6 @@ LDFLAGS=-lm
 
 plant: plant.o lib
 	gcc -shared plant.o -o lib/_plant.so -lm
+
+.c.o:
+	$(CC) -c $< $(CFLAGS)

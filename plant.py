@@ -128,7 +128,8 @@ def integrate_two_rk4(initial_states, coupling, dt, N_integrate, stride=1):
 	initial_states = np.asarray(initial_states) #
 	assert initial_states.size == N_EQ2
 
-	coup = coupling 
+	coup = np.zeros((2), float)
+	coup[:coupling.size] = coupling
 
 	X_out = np.zeros((2*N_integrate), float)
 	p = params_three()
@@ -213,13 +214,14 @@ if __name__ == '__main__':
 	from pylab import *
 	import time
 
-	dt = 0.5 
+	dt = 1. 
 	stride = 10
-	N = 25*10**4
+	N = 35*10**4
 	t = dt*arange(N)
-	coup2 =	0.010*np.ones((2), float)
+	init_states = [0.,0.,0.5,0.,0.,0.,0.,0.,0.4,0.,0.,0.]
+	coup2 =	0.008*np.ones((2), float)
 	coups = 0.008*np.ones((18), float)	
-	X = integrate_two_rk4(0.1*randn(12), coupling=coup2, dt=dt/float(stride), N_integrate=N, stride=stride)
+	X = integrate_two_rk4(init_states, coupling=coup2, dt=dt/float(stride), N_integrate=N, stride=stride)
 	#X = integrate_one_rk4(initial_state, dt=dt/float(stride), N_integrate=N, stride=stride)
 	#X = integrate_four_rk4(0.1*randn(24), coupling=coups, dt=dt/float(stride), N_integrate=N, stride=stride)
 
