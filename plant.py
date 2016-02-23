@@ -107,6 +107,18 @@ def single_orbit(dt=dt, N_integrate=N_integrate, stride=stride, V_threshold=THRE
 
 
 #===
+lib.derivs_two.argtypes = [ct.POINTER(ct.c_double), ct.POINTER(ct.c_double), ct.POINTER(ct.c_double), ct.POINTER(ct.c_double)]
+def derivs_two(state):
+	state = np.array(state, dtype=float)
+	derivative = np.zeros((3), float)
+	parameters = params_one()
+	coupling = 0.008*np.ones((2), float)
+	lib.derivs_two(state.ctypes.data_as(ct.POINTER(ct.c_double)),
+			derivative.ctypes.data_as(ct.POINTER(ct.c_double)),
+			parameters.ctypes.data_as(ct.POINTER(ct.c_double)),
+			coupling.ctypes.data_as(ct.POINTER(ct.c_double)))
+	return derivative
+
 lib.integrate_two_rk4.argtypes = [ct.POINTER(ct.c_double),
 					ct.POINTER(ct.c_double),
 					ct.POINTER(ct.c_double),
@@ -203,9 +215,9 @@ if __name__ == '__main__':
 
 	dt = 0.5 
 	stride = 10
-	N = 50*10**4
+	N = 25*10**4
 	t = dt*arange(N)
-	coup2 =	0.008*np.ones((2), float)
+	coup2 =	0.010*np.ones((2), float)
 	coups = 0.008*np.ones((18), float)	
 	X = integrate_two_rk4(0.1*randn(12), coupling=coup2, dt=dt/float(stride), N_integrate=N, stride=stride)
 	#X = integrate_one_rk4(initial_state, dt=dt/float(stride), N_integrate=N, stride=stride)
@@ -213,7 +225,7 @@ if __name__ == '__main__':
 
 	
 	plot(t, X[:, 0])
-	plot(t, X[:, 1]-80.)
+	plot(t, X[:, 1]-90.)
 	#plot(t, X[:, 2]-160.)
 	#plot(t, X[:, 3]-240.)
 	show()

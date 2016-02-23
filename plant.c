@@ -135,8 +135,8 @@ void derivs_two(const double* y, double* dydt, const double* p, const double* ki
 	dydt[11] = 0.15*(1.-S)*boltzmann(V, 20., 100.)-0.02*S;  // dS/dt
 	
 	//Coupling With Alpha Synapse	
-	dydt[0] +=       (E_syn-V)*(kij[0]*boltzmann(dydt[0], THRESHOLD, THRESHOLD_SLOPE)/C_m*dydt[11]);
-	dydt[N_EQ1] +=   (E_syn-V2)*(kij[1]*boltzmann(dydt[1], THRESHOLD, THRESHOLD_SLOPE)/C_m*dydt[5]);
+	dydt[0] +=       (E_syn-V)*(kij[0]*(boltzmann(dydt[1], THRESHOLD, THRESHOLD_SLOPE)/C_m)*dydt[11]);
+	dydt[N_EQ1] +=   (E_syn-V2)*(kij[1]*(boltzmann(dydt[0], THRESHOLD, THRESHOLD_SLOPE)/C_m)*dydt[5]);
 
 	dydt[0]       	  += (kij[12]*(V2-V))/C_m;
 	dydt[N_EQ1]       += (kij[12]*(V-V2))/C_m;
